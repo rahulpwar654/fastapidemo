@@ -1,11 +1,34 @@
+import sqlite3
+from datetime import datetime, timedelta
+
+import jwt
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
-import jwt
-from datetime import datetime, timedelta
-import sqlite3
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
 
 app = FastAPI()
+
+
+# Example ASGI middleware for mTLS authentication
+class MutualTLSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Get the client certificate from the request
+        client_cert = request.scope.get("client_cert", None)
+
+        # Verify client certificate here against a trusted CA
+        if not client_cert:
+            return Response("Client certificate required", status_code=403)
+
+        # Continue handling the request
+        response = await call_next(request)
+        return response
+
+
+# Attach the middleware to the app
+app.add_middleware(MutualTLSMiddleware)
 
 # Secret key and algorithm for JWT
 SECRET_KEY = "mysecretkey"
