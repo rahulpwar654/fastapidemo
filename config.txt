@@ -1,89 +1,48 @@
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.MediaType;
+import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.responses.ApiResponses;
+import io.swagger.v3.oas.models.responses.ApiResponsesExtensions;
+import io.swagger.v3.oas.models.responses.ApiResponsesExtensionsConstant;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import springfox.documentation.builders.PathSelectors;
-import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.spi.DocumentationType;
-import springfox.documentation.spring.web.plugins.Docket;
-import springfox.documentation.swagger.web.ApiKeyVehicle;
-import springfox.documentation.swagger.web.SecurityConfiguration;
-import springfox.documentation.swagger2.annotations.EnableSwagger2WebMvc;
+
+import java.util.Map;
 
 @Configuration
-@EnableSwagger2WebMvc
 public class SwaggerConfig {
 
     @Bean
-    @Profile("dev")
-    public Docket apiDev() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .select()
-                .apis(RequestHandlerSelectors.basePackage("your.package.controller"))
-                .paths(PathSelectors.any())
-                .build()
-                .securitySchemes(Arrays.asList(apiKey()))
-                .genericModelSubstitutes(ResponseEntity.class)
-                .useDefaultResponseMessages(false)
-                .produces(Collections.singleton(MediaType.APPLICATION_JSON_VALUE))
-                .consumes(Collections.singleton(MediaType.APPLICATION_JSON_VALUE))
-                .apiInfo(apiInfo());
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI()
+                .components(new Components())
+                .path("/your-api-path", getPathItem());
     }
 
-    @Bean
-    @Profile("test")
-    public Docket apiTest() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .select()
-                .apis(RequestHandlerSelectors.basePackage("your.package.controller"))
-                .paths(PathSelectors.any())
-                .build()
-                .securitySchemes(Arrays.asList(apiKey()))
-                .genericModelSubstitutes(ResponseEntity.class)
-                .useDefaultResponseMessages(false)
-                .produces(Collections.singleton(MediaType.APPLICATION_JSON_VALUE))
-                .consumes(Collections.singleton(MediaType.APPLICATION_JSON_VALUE))
-                .apiInfo(apiInfo());
+    private io.swagger.v3.oas.models.PathItem getPathItem() {
+        Operation operation = new Operation()
+                .responses(new ApiResponses()
+                        .addApiResponse("200", new ApiResponse().description("OK"))
+                        .addApiResponse("400", customBadRequestResponse())
+                        .addApiResponse("404", new ApiResponse().description("Not Found")));
+
+        return new io.swagger.v3.oas.models.PathItem().get(operation);
     }
 
-    private ApiKey apiKey() {
-        return new ApiKey("JWT", "Authorization", ApiKeyVehicle.HEADER.getValue());
-    }
+    private ApiResponse customBadRequestResponse() {
+        Map<String, Object> extensions = Map.of(
+                ApiResponsesExtensionsConstant.X_COMMON_EXTENSIONS,
+                Map.of("code", 400,
+                        "message", "Your custom bad request message"));
 
-    private ApiInfo apiInfo() {
-        return new ApiInfoBuilder()
-                .title("Your API Title")
-                .description("Your API Description")
-                .version("1.0")
-                .build();
-    }
-
-    // Custom response for specific HTTP response code
-    @Bean
-    public Docket customResponseApi() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .select()
-                .apis(RequestHandlerSelectors.any())
-                .paths(PathSelectors.any())
-                .build()
-                .useDefaultResponseMessages(false)
-                .globalResponses(HttpMethod.GET,
-                        Arrays.asList(
-                                new ResponseBuilder()
-                                        .code(String.valueOf(HttpStatus.NOT_FOUND.value()))
-                                        .description("Resource not found")
-                                        .build(),
-                                new ResponseBuilder()
-                                        .code(String.valueOf(HttpStatus.UNAUTHORIZED.value()))
-                                        .description("Unauthorized")
-                                        .build(),
-                                // Add more custom responses as needed
-                                new ResponseBuilder()
-                                        .code("500")
-                                        .description("Internal server error")
-                                        .build()
-                        ));
+        return new ApiResponse()
+                .description("Bad Request")
+                .content(new Content().addMediaType(
+                        "application/json",
+                        new MediaType()))
+                .extensions(extensions);
     }
 }
