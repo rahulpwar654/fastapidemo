@@ -106,4 +106,25 @@ def decrypt_data_with_decrypted_data_key(cipher_text, decrypted_data_key):
         return None
 
 
+############################
+
+
+def get_key_id(alias_name):
+    # Create the KMS client
+    kms_client = boto3.client('kms')
+
+    # Initialize a variable to hold the Key ID
+    key_id = None
+
+    # List aliases (pagination handled by AWS SDK)
+    paginator = kms_client.get_paginator('list_aliases')
+    for page in paginator.paginate():
+        # Iterate through the aliases in the current page
+        for alias in page['Aliases']:
+            if alias_name == alias['AliasName']:
+                key_id = alias['TargetKeyId']
+                return key_id  # Return the Key ID once found
+
+    return key_id 
+
 
