@@ -46,3 +46,64 @@ public class SwaggerConfig {
                 .extensions(extensions);
     }
 }
+
+
+/// Decrypt code
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+import base64
+
+def decrypt_data_with_decrypted_data_key(cipher_text, decrypted_data_key):
+    try:
+        # Decode base64 encoded ciphertext
+        decode_base64 = base64.b64decode(cipher_text)
+        
+        # Create AES cipher instance in ECB mode with the provided key
+        cipher = Cipher(
+            algorithms.AES(decrypted_data_key),
+            modes.ECB(),
+            backend=default_backend()
+        )
+        
+        # Create a decryptor object
+        decryptor = cipher.decryptor()
+        
+        # Perform decryption
+        decrypted_bytes = decryptor.update(decode_base64) + decryptor.finalize()
+        
+        # Convert decrypted bytes to string using UTF-8 encoding
+        return decrypted_bytes.decode('utf-8')
+    except Exception as e:
+        # Log or print the exception as needed
+        print(f"Exception occurred while decrypting with data key: {e}")
+        return None
+
+
+###########
+from Crypto.Cipher import AES
+import base64
+
+def decrypt_data_with_decrypted_data_key(cipher_text, decrypted_data_key):
+    try:
+        # Decode base64 encoded ciphertext
+        decode_base64 = base64.b64decode(cipher_text)
+        
+        # Create AES cipher in ECB mode
+        cipher = AES.new(decrypted_data_key, AES.MODE_ECB)
+        
+        # Perform decryption
+        decrypted_bytes = cipher.decrypt(decode_base64)
+        
+        # Remove possible padding (PKCS5/7 padding)
+        padding_length = decrypted_bytes[-1]
+        decrypted_bytes = decrypted_bytes[:-padding_length]
+        
+        # Convert decrypted bytes to string using UTF-8 encoding
+        return decrypted_bytes.decode('utf-8')
+    except Exception as e:
+        # Log or print the exception as needed
+        print(f"Exception occurred while decrypting with data key: {e}")
+        return None
+
+
+
