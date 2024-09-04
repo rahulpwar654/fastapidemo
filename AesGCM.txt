@@ -1,0 +1,46 @@
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
+import base64
+
+# Encryption function
+def encrypt_data_gcm(plain_text, key):
+    # Convert plaintext to bytes if it's a string
+    if isinstance(plain_text, str):
+        plain_text = plain_text.encode()
+
+    # Generate a random 12-byte nonce (recommended size for AES-GCM)
+    nonce = get_random_bytes(12)
+
+    # Create AES cipher in GCM mode with the key and nonce
+    cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+
+    # Encrypt the plaintext and get the authentication tag
+    cipher_text, tag = cipher.encrypt_and_digest(plain_text)
+
+    # Combine nonce, cipher text, and tag, then base64 encode the result
+    encrypted_data = base64.b64encode(nonce + tag + cipher_text).decode('utf-8')
+
+    return encrypted_data
+
+# Decryption function
+def decrypt_data_gcm(cipher_text, key):
+    try:
+        # Decode the base64 encoded cipher text
+        decoded_data = base64.b64decode(cipher_text)
+
+        # Extract the nonce (first 12 bytes), tag (next 16 bytes), and actual cipher text
+        nonce = decoded_data[:12]
+        tag = decoded_data[12:28]
+        actual_cipher_text = decoded_data[28:]
+
+        # Create AES cipher in GCM mode with the key and nonce
+        cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+
+        # Decrypt the cipher text and verify the tag
+        decrypted_data = cipher.decrypt_and_verify(actual_cipher_text, tag)
+
+        # Convert decrypted bytes to string and return
+        return decrypted_data.decode('utf-8')
+    except Exception as e:
+        print(f"Exception occurred during decryption: {e}")
+        return None
