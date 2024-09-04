@@ -44,3 +44,23 @@ def decrypt_data_gcm(cipher_text, key):
     except Exception as e:
         print(f"Exception occurred during decryption: {e}")
         return None
+
+
+/**
+USAGE
+
+key = get_random_bytes(16)  # AES key must be 16, 24, or 32 bytes
+plain_text = "This is a secret message."
+
+# Encrypt
+encrypted_data = encrypt_data(plain_text, key)
+print(f"Encrypted: {encrypted_data}")
+
+# Decrypt
+decrypted_data = decrypt_data(encrypted_data, key)
+print(f"Decrypted: {decrypted_data}")
+
+
+
+
+*/
